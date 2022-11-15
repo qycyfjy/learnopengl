@@ -58,15 +58,15 @@ int main() {
 	glViewport(0, 0, 800, 600);
 
 	float vertices[] = {
-		0.5f, 0.5f, 0.0f,  // 右上角
-		0.5f, -0.5f, 0.0f,  // 右下角
-		-0.5f, -0.5f, 0.0f,  // 左下角
-		-0.5f, 0.5f, 0.0f,  // 左上角
+		0.0f, 0.5f, 0.0f,
+		0.0f, -0.5f, 0.0f,
+		-0.5f, -0.5f, 0.0f,
+		0.5f, 0.5f, 0.0f,
 	};
 
 	unsigned int indices[] = {
-		0, 1, 3,  // 第一个三角形
-		1, 2, 3,  // 第二个三角形
+		0, 1, 2,  // 第一个三角形
+		0, 1, 3,  // 第二个三角形
 	};
 
 	const char* vertex_shader_src = R"(
@@ -128,9 +128,9 @@ void main() {
 
 		glUseProgram(shader_program);
 		glBindVertexArray(VAO);
-		// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);  // 线框模式
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);  // 线框模式
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-		// glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
