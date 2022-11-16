@@ -8,6 +8,7 @@
 #include "GLFW/glfw3.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#include "spdlog/spdlog.h"
 
 #include "Shader.h"
 
@@ -16,7 +17,7 @@
 #endif
 
 void OnWindowResize(GLFWwindow* window, int width, int height) {
-	printf("current window size: %d:%d\n", width, height);
+	spdlog::info("current window size: {}:{}\n", width, height);
 	glViewport(0, 0, width, height);
 }
 
@@ -62,8 +63,8 @@ int main() {
 #pragma endregion
 
 	float vertices[] = {
-		0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,    // 右上
-		0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,    // 右下
+		0.5f,  0.5f, 0.0f,    1.0f, 0.0f, 0.0f,   1.0f, 1.0f,    // 右上
+		0.5f, -0.5f, 0.0f,    0.0f, 1.0f, 0.0f,   1.0f, 0.0f,    // 右下
 		-0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // 左下
 		-0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // 左上
 	};
@@ -73,6 +74,7 @@ int main() {
 		0,3,2,
 	};
 
+#pragma region Vertex, Texture, etc...
 	unsigned int VAO;
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
@@ -117,6 +119,7 @@ int main() {
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	stbi_image_free(data);
+#pragma endregion
 
 	Shader s("vertex.txt", "fragment.txt");
 	s.use();
@@ -125,12 +128,17 @@ int main() {
 
 	float mix = 0.0f;
 
+#pragma region Loop Begin
 	while (!glfwWindowShouldClose(window)) {
 		ProcessInput(window);
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
+#pragma endregion
 
+		///
+		/// 主逻辑
+		/// 
 		ImGui::SliderFloat("mixv", &mix, 0.0f, 1.0f);
 		s.setUniform("mixv", mix);
 
@@ -141,12 +149,14 @@ int main() {
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
+#pragma region Loop End
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
+#pragma endregion
 
 #pragma region Some Cleanup
 	ImGui_ImplOpenGL3_Shutdown();

@@ -1,4 +1,5 @@
 #include "Shader.h"
+#include "spdlog/spdlog.h"
 
 static void CheckShader(unsigned int shader) {
 	int success;
@@ -6,7 +7,7 @@ static void CheckShader(unsigned int shader) {
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 	if (!success) {
 		glGetShaderInfoLog(shader, 512, nullptr, err_log);
-		printf("failed to compile shader: %s\n", err_log);
+		spdlog::error("failed to compile shader: {}\n", err_log);
 	}
 }
 
@@ -16,7 +17,7 @@ static void CheckProgram(unsigned int program) {
 	glGetProgramiv(program, GL_LINK_STATUS, &success);
 	if (!success) {
 		glGetProgramInfoLog(program, 512, nullptr, err_log);
-		printf("failed to link shaders: %s\n", err_log);
+		spdlog::error("failed to link shaders: {}\n", err_log);
 	}
 }
 
