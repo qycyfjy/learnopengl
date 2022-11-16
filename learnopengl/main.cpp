@@ -118,6 +118,12 @@ int main() {
 	s.setUniform("texture2", 1);
 
 	float mix = 0.0f;
+	float scale = 0.5;
+	float rotate = 90.0;
+	bool auto_rotate = false;
+	float auto_rotate_speed = 90.0f;
+	float move_v = 0.0f;
+	float move_h = 0.0f;
 
 #pragma region Loop Begin
 	while (!glfwWindowShouldClose(window)) {
@@ -132,6 +138,29 @@ int main() {
 		/// 
 		ImGui::SliderFloat("mixv", &mix, 0.0f, 1.0f);
 		s.setUniform("mixv", mix);
+
+		// 缩放
+		glm::mat4 trans(1.0f);
+		ImGui::SliderFloat("scale", &scale, 0.0f, 10.0f);
+		trans = glm::scale(trans, glm::vec3(scale, scale, scale));
+
+		// 先位移
+		ImGui::SliderFloat("Move(V)", &move_v, -3.0f, 3.0f);
+		ImGui::SliderFloat("Move(H)", &move_h, -3.0f, 3.0f);
+		trans = glm::translate(trans, glm::vec3(move_v, move_h, 1.0f));
+
+		// 后旋转
+		ImGui::Checkbox("Auto Rotate", &auto_rotate);
+		if (auto_rotate) {
+			ImGui::SliderFloat("Speed", &auto_rotate_speed, 1.0f, 7200.0f);
+			rotate = fmodf(rotate + ImGui::GetIO().DeltaTime * auto_rotate_speed, 360.0f);
+		}
+		else {
+			ImGui::SliderFloat("rotate", &rotate, 0.0f, 360.0f);
+		}
+		trans = glm::rotate(trans, glm::radians(rotate), glm::vec3(0.0, 0.0, 1.0));
+
+		s.setUniform("transform", trans);
 
 		// RENDER
 		glClearColor(19 / 255.0f, 167 / 255.0f, 139 / 255.0f, 1.0f);

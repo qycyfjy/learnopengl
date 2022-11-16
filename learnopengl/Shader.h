@@ -1,6 +1,6 @@
 #pragma once
 
-#include "glad/glad.h"
+#include "stdafx.h"
 #include "Utils.h"
 
 class Shader {
@@ -25,6 +25,10 @@ public:
 	void setUniform(const char* name, float value)
 	{
 		glUniform1f(glGetUniformLocation(ID, name), value);
+	}
+
+	void setUniform(const char* name, const glm::mat4& value) {
+		glUniformMatrix4fv(glGetUniformLocation(ID, name), 1, GL_FALSE, glm::value_ptr(value));
 	}
 
 	unsigned int ID;
