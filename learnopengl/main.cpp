@@ -1,6 +1,9 @@
 #include <cstdio>
 #include <cmath>
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
 #define STB_IMAGE_IMPLEMENTATION
@@ -8,12 +11,17 @@
 
 #include "Shader.h"
 
+#if defined(_MSC_VER) && (_MSC_VER >= 1900) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS)
+#pragma comment(lib, "legacy_stdio_definitions")
+#endif
+
 void OnWindowResize(GLFWwindow* window, int width, int height) {
 	printf("current window size: %d:%d\n", width, height);
 	glViewport(0, 0, width, height);
 }
 
 void ProcessInput(GLFWwindow* window) {
+	glfwPollEvents();
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, true);
 	}
@@ -34,6 +42,7 @@ int main() {
 	}
 	glfwSetFramebufferSizeCallback(window, OnWindowResize);
 	glfwMakeContextCurrent(window);
+	glfwSwapInterval(1); // Enable vsync
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		printf("failed to init GLAD\n");
@@ -106,8 +115,23 @@ int main() {
 	s.setUniform("texture1", 0);
 	s.setUniform("texture2", 1);
 
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGui::StyleColorsDark();
+	ImGui_ImplGlfw_InitForOpenGL(window, true);
+	ImGui_ImplOpenGL3_Init("#version 130");
+
+	float mix = 0.0f;
+
 	while (!glfwWindowShouldClose(window)) {
 		ProcessInput(window);
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+
+		ImGui::SliderFloat("mixv", &mix, 0.0f, 1.0f);
+		s.setUniform("mixv", mix);
 
 		// RENDER
 		glClearColor(19 / 255.0f, 167 / 255.0f, 139 / 255.0f, 1.0f);
@@ -116,10 +140,18 @@ int main() {
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
+
+	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;
 
