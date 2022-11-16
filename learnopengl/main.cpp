@@ -28,6 +28,7 @@ void ProcessInput(GLFWwindow* window) {
 }
 
 int main() {
+#pragma region Some Init
 	glfwInit();
 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -48,8 +49,17 @@ int main() {
 		printf("failed to init GLAD\n");
 		return -1;
 	}
-
 	glViewport(0, 0, 800, 600);
+
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGui::StyleColorsDark();
+	ImGui_ImplGlfw_InitForOpenGL(window, true);
+	ImGui_ImplOpenGL3_Init("#version 130");
+
+	stbi_set_flip_vertically_on_load(true);
+#pragma endregion
 
 	float vertices[] = {
 		0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,    // срио
@@ -81,9 +91,7 @@ int main() {
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
 	glEnableVertexAttribArray(2);
 
-	stbi_set_flip_vertically_on_load(true);
 	int w, h, nc;
-
 	unsigned char* data = stbi_load("a.jpg", &w, &h, &nc, 0);
 	unsigned int texture1;
 	glGenTextures(1, &texture1);
@@ -115,13 +123,6 @@ int main() {
 	s.setUniform("texture1", 0);
 	s.setUniform("texture2", 1);
 
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	ImGui::StyleColorsDark();
-	ImGui_ImplGlfw_InitForOpenGL(window, true);
-	ImGui_ImplOpenGL3_Init("#version 130");
-
 	float mix = 0.0f;
 
 	while (!glfwWindowShouldClose(window)) {
@@ -147,13 +148,14 @@ int main() {
 		glfwPollEvents();
 	}
 
+#pragma region Some Cleanup
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
 
 	glfwDestroyWindow(window);
 	glfwTerminate();
-	return 0;
+#pragma endregion
 
 	return 0;
 }
