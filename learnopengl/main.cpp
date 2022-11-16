@@ -1,14 +1,5 @@
-#include <cstdio>
-#include <cmath>
-
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
-#include "glad/glad.h"
-#include "GLFW/glfw3.h"
-#define STB_IMAGE_IMPLEMENTATION
+#include "stdafx.h"
 #include "stb_image.h"
-#include "spdlog/spdlog.h"
 
 #include "Shader.h"
 
@@ -17,7 +8,7 @@
 #endif
 
 void OnWindowResize(GLFWwindow* window, int width, int height) {
-	spdlog::info("current window size: {}:{}\n", width, height);
+	spdlog::info("current window size: {}x{}\n", width, height);
 	glViewport(0, 0, width, height);
 }
 

@@ -1,5 +1,5 @@
 #include "Shader.h"
-#include "spdlog/spdlog.h"
+#include "stdafx.h"
 
 static void CheckShader(unsigned int shader) {
 	int success;
