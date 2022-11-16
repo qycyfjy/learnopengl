@@ -129,6 +129,7 @@
   <ItemGroup>
     <ClCompile Include="backend\imgui_impl_glfw.cpp" />
     <ClCompile Include="backend\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="data.cpp" />
     <ClCompile Include="main.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
     </ClCompile>
@@ -141,6 +142,7 @@
     <ClInclude Include="backend\imgui_impl_glfw.h" />
     <ClInclude Include="backend\imgui_impl_opengl3.h" />
     <ClInclude Include="backend\imgui_impl_opengl3_loader.h" />
+    <ClInclude Include="data.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Utils.h" />
