@@ -85,7 +85,7 @@ int main() {
 	glEnableVertexAttribArray(2);
 
 	int w, h, nc;
-	unsigned char* data = stbi_load("a.jpg", &w, &h, &nc, 0);
+	unsigned char* data = stbi_load("rc/a.jpg", &w, &h, &nc, 0);
 	unsigned int texture1;
 	glGenTextures(1, &texture1);
 	glActiveTexture(GL_TEXTURE0);
@@ -98,7 +98,7 @@ int main() {
 	glGenerateMipmap(GL_TEXTURE_2D);
 	stbi_image_free(data);
 
-	data = stbi_load("b.jpg", &w, &h, &nc, 0);
+	data = stbi_load("rc/b.jpg", &w, &h, &nc, 0);
 	unsigned int texture2;
 	glGenTextures(1, &texture2);
 	glActiveTexture(GL_TEXTURE1);
@@ -112,7 +112,7 @@ int main() {
 	stbi_image_free(data);
 #pragma endregion
 
-	Shader s("vertex.txt", "fragment.txt");
+	Shader s("rc/vertex.txt", "rc/fragment.txt");
 	s.use();
 	s.setUniform("texture1", 0);
 	s.setUniform("texture2", 1);
