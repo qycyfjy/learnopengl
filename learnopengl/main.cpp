@@ -3,17 +3,54 @@
 
 #include "Shader.h"
 
+#if defined(_MSC_VER) && (_MSC_VER >= 1900) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS)
+#pragma comment(lib, "legacy_stdio_definitions")
+#endif
+
 extern float vertices[];
 extern int vertices_size;
 extern glm::vec3 cube_positions[];
 extern int cube_positions_size;
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1900) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS)
-#pragma comment(lib, "legacy_stdio_definitions")
-#endif
-
 int g_width = 800;
 int g_height = 600;
+
+#pragma region Camera
+glm::vec3 g_camera_pos = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 g_camera_front = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 g_camera_up = glm::vec3(0.0f, 1.0f, 0.0f);
+float g_camera_speed_a = 2.5f;
+float g_yaw = -90.0f;  // Æ«º½
+float g_pitch = 0.0f;  // ¸©Ñö
+float g_fov = 45.0f;
+float g_ratio = g_width / static_cast<float>(g_height);
+float g_near_plane = 0.1f;
+float g_far_plane = 100.0f;
+#pragma endregion
+
+#pragma region Time
+float g_delta = 0.0f;
+float g_last_frame = 0.0f;
+#pragma endregion
+
+#pragma region Mouse
+bool g_cursor_capturing = true;
+float g_last_x = 400;
+float g_last_y = 300;
+float g_sensitivity = 0.1f;
+bool g_first_move = true;
+#pragma endregion
+
+template <typename T>
+T Clamp(T v, T min, T max) {
+	if (v < min) {
+		return min;
+	}
+	if (v > max) {
+		return max;
+	}
+	return v;
+}
 
 void OnWindowResize(GLFWwindow* window, int width, int height) {
 	spdlog::info("current window size: {}x{}\n", width, height);
@@ -22,8 +59,55 @@ void OnWindowResize(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
 }
 
+void OnMouseMove(GLFWwindow* window, double xpos_raw, double ypos_raw) {
+	if (g_cursor_capturing) {
+		float xpos = static_cast<float>(xpos_raw);
+		float ypos = static_cast<float>(ypos_raw);
+		if (g_first_move) {
+			g_last_x = xpos;
+			g_last_y = ypos;
+			g_first_move = false;
+		}
+		float xoffset = xpos - g_last_x;
+		float yoffset = g_last_y - ypos;
+		g_last_x = xpos;
+		g_last_y = ypos;
+
+		xoffset *= g_sensitivity;
+		yoffset *= g_sensitivity;
+
+		g_yaw += xoffset;
+		g_pitch = Clamp(g_pitch + yoffset, -89.0f, 89.0f);
+
+		glm::vec3 front(1.0f);
+		front.x = cos(glm::radians(g_yaw)) * cos(glm::radians(g_pitch));
+		front.y = sin(glm::radians(g_pitch));
+		front.z = cos(glm::radians(g_pitch)) * sin(glm::radians(g_yaw));
+		g_camera_front = glm::normalize(front);
+	}
+}
+void OnMouseScroll(GLFWwindow* window, double xoffset_raw, double yoffset_raw) {
+	if (g_cursor_capturing) {
+		float yoffset = static_cast<float>(yoffset_raw);
+		g_fov = Clamp(g_fov - yoffset, 1.0f, 180.0f);
+	}
+}
+
 void ProcessInput(GLFWwindow* window) {
 	glfwPollEvents();
+	float camera_speed = g_camera_speed_a * g_delta;
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+		g_camera_pos += camera_speed * g_camera_front;
+	}
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+		g_camera_pos -= camera_speed * g_camera_front;
+	}
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+		g_camera_pos -= glm::normalize(glm::cross(g_camera_front, g_camera_up)) * camera_speed;
+	}
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+		g_camera_pos += glm::normalize(glm::cross(g_camera_front, g_camera_up)) * camera_speed;
+	}
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, true);
 	}
@@ -44,8 +128,11 @@ int main() {
 		return -1;
 	}
 	glfwSetFramebufferSizeCallback(window, OnWindowResize);
+	glfwSetCursorPosCallback(window, OnMouseMove);
+	glfwSetScrollCallback(window, OnMouseScroll);
 	glfwMakeContextCurrent(window);
 	glfwSwapInterval(1); // Enable vsync
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		printf("failed to init GLAD\n");
@@ -100,13 +187,12 @@ int main() {
 	s.use();
 	s.setUniform("texture1", 0);
 
-	float fov = 45.0f;
-	float ratio = g_width / static_cast<float>(g_height);
-	float near_plane = 0.1f;
-	float far_plane = 100.0f;
-
 #pragma region Loop Begin
 	while (!glfwWindowShouldClose(window)) {
+		float current = glfwGetTime();
+		g_delta = current - g_last_frame;
+		g_last_frame = current;
+
 		ProcessInput(window);
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
@@ -120,17 +206,21 @@ int main() {
 		///
 		/// Ö÷Âß¼­
 		/// 
-		ImGui::SliderFloat("fov", &fov, 15.0f, 180.0f);
-		ImGui::SliderFloat("ratio", &ratio, 0.5f, 5.0f);
-		ImGui::SliderFloat("near plane", &near_plane, 0.01f, 10.0f);
-		ImGui::SliderFloat("far plane", &far_plane, 10.0f, 500.0f);
+		ImGui::SliderFloat("mouse sensitivity", &g_sensitivity, 0.05f, 1.0f);
+		ImGui::SliderFloat("move speed", &g_camera_speed_a, 1.0f, 10.0f);
+
+		ImGui::SliderFloat("fov", &g_fov, 15.0f, 180.0f);
+		ImGui::SliderFloat("ratio", &g_ratio, 0.5f, 5.0f);
+		ImGui::SliderFloat("near plane", &g_near_plane, 0.01f, 10.0f);
+		ImGui::SliderFloat("far plane", &g_far_plane, 10.0f, 500.0f);
 		glm::mat4 projection = glm::mat4(1.0f);
-		projection = glm::perspective(glm::radians(fov), ratio, near_plane, far_plane);
+		projection = glm::perspective(glm::radians(g_fov), g_ratio, g_near_plane, g_far_plane);
 		s.setUniform("projection", projection);
 
-		glm::mat4 view = glm::mat4(1.0f);
-		view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+		glm::mat4 view(1.0f);
+		view = glm::lookAt(g_camera_pos, g_camera_pos + g_camera_front, g_camera_up);
 		s.setUniform("view", view);
+
 		glBindVertexArray(VAO);
 		for (unsigned int i = 0; i < 10; i++)
 		{
